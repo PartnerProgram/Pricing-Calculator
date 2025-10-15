@@ -78,12 +78,23 @@
       <div class="rounded-2xl bg-[var(--c-surface)] p-6 shadow-[var(--shadow-soft)] ring-1 ring-[color:var(--c-surface-3)]/40">
         <form id="customer-form" class="grid md:grid-cols-2 gap-6 mb-4" novalidate>
           <div>
-            <label for="currency" class="font-semibold block mb-2">Currency</label>
-            <select id="currency" name="currency" class="w-40 rounded-lg px-3 py-2 bg-[var(--c-surface-2)] ring-1 ring-[color:var(--c-surface-3)]/60 focus:outline-none focus:ring-2 focus:ring-[var(--c-primary)]">
-              <option value="USD" selected>USD</option>
-              <option value="GBP">GBP (Pound)</option>
-              <option value="EUR">EUR (Euro)</option>
-            </select>
+            <div class="flex gap-4">
+              <div>
+                <label for="currency" class="font-semibold block mb-2">Currency</label>
+                <select id="currency" name="currency" class="w-40 rounded-lg px-3 py-2 bg-[var(--c-surface-2)] ring-1 ring-[color:var(--c-surface-3)]/60 focus:outline-none focus:ring-2 focus:ring-[var(--c-primary)]">
+                  <option value="USD" selected>USD</option>
+                  <option value="GBP">GBP (Pound)</option>
+                  <option value="EUR">EUR (Euro)</option>
+                </select>
+              </div>
+              <div>
+                <label for="type" class="font-semibold block mb-2">Type</label>
+                <select id="type" name="type" class="w-40 rounded-lg px-3 py-2 bg-[var(--c-surface-2)] ring-1 ring-[color:var(--c-surface-3)]/60 focus:outline-none focus:ring-2 focus:ring-[var(--c-primary)]">
+                  <option value="Net New" selected>Net New</option>
+                  <option value="Renewal">Renewal</option>
+                </select>
+              </div>
+            </div>
             <label for="users" class="font-semibold block mt-4 mb-2">User count</label>
             <input id="users" name="users" type="number" inputmode="numeric" min="250" value="500"
               class="w-full rounded-lg px-3 py-2 bg-[var(--c-surface-2)] ring-1 ring-[color:var(--c-surface-3)]/60 focus:outline-none focus:ring-2 focus:ring-[var(--c-primary)]"
@@ -286,6 +297,7 @@
 
     const STATE = {
       currency: 'USD',
+      type: 'Net New',
       users: 500,
       term: 'Monthly',
       totals: {
@@ -365,7 +377,8 @@
       const baseAnnualUSD = annualCostUSD;
       const totalMonthlyUSD = baseMonthlyUSD;
       const totalAnnualUSD = baseAnnualUSD;
-      const marginUSD = totalAnnualUSD * 0.30;
+      const marginRate = STATE.type === 'Net New' ? 0.30 : 0.15;
+      const marginUSD = totalAnnualUSD * marginRate;
       const partnerPriceUSD = totalAnnualUSD - marginUSD;
       const salesCommissionUSD = totalAnnualUSD * 0.10;
       STATE.totals = {
@@ -423,10 +436,12 @@
       var usersInput = document.getElementById('users');
       var termSelect = document.getElementById('term');
       var currencySelect = document.getElementById('currency');
+      var typeSelect = document.getElementById('type');
       var termHelp = document.getElementById('term-help');
       if (Number(usersInput.value) !== STATE.users) usersInput.value = STATE.users;
       if (termSelect.value !== STATE.term) termSelect.value = STATE.term;
       if (currencySelect.value !== STATE.currency) currencySelect.value = STATE.currency;
+      if (typeSelect.value !== STATE.type) typeSelect.value = STATE.type;
       if (termHelp) {
         termHelp.textContent = 'When ' + STATE.term + ' is selected, all MSRP values show ' + (STATE.term === 'Monthly' ? 'monthly (MRR)' : 'annual (ARR)') + '.';
       }
@@ -484,7 +499,7 @@
         `- ${totalLabel}: ${formatCurrencyFromUSD(totalValue)}`,
         '',
         'Partner Pricing (ARR)',
-        `- Net New Partner Price: ${formatCurrencyFromUSD(STATE.totals.partnerPrice)}`
+        `- ${STATE.type} Partner Price: ${formatCurrencyFromUSD(STATE.totals.partnerPrice)}`
       ];
       const body = encodeURIComponent(lines.join('\n'));
       const mailto = `mailto:?subject=${encodeURIComponent(subject)}&body=${body}`;
@@ -501,6 +516,7 @@
       const usersError = document.getElementById('users-error');
       const termSelect = document.getElementById('term');
       const currencySelect = document.getElementById('currency');
+      const typeSelect = document.getElementById('type');
 
       usersInput.addEventListener('input', () => {
         const n = parseInt(usersInput.value, 10);
@@ -522,6 +538,11 @@
 
       currencySelect.addEventListener('change', () => {
         STATE.currency = currencySelect.value;
+        renderAll();
+      });
+
+      typeSelect.addEventListener('change', () => {
+        STATE.type = typeSelect.value;
         renderAll();
       });
 
